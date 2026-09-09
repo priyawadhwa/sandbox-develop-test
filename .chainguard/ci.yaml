@@ -1,0 +1,14 @@
+# Copyright 2026 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+# Minimal workflow.v1 document for a `chainctl develop` session smoke test.
+# The `develop` job is the session's default: its environment (the Go
+# toolchain + git) is what the resident shell opens in.
+name: ci
+jobs:
+  develop:
+    environment:
+      packages: [go, git]
+    steps:
+      - name: build
+        cmd: [go, build, ./...]
