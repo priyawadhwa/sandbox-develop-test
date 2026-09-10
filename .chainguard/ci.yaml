@@ -2,20 +2,25 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Smoke-test workflow for `chainctl develop --with claude` (laptop credential
-# forwarding). The develop job ships a shell + the Claude Code CLI. The Claude
-# API rides the injected http://claude proxy (credential stays on the laptop),
-# but the interactive TUI also makes direct calls to platform.claude.com etc.
-# Under the default EGRESS_VIOLATION_DESTROY a stray DNS query tears the guest
-# down (the "connection lost" loop), so this job uses DENY: refuse the stray
-# connection, keep the guest alive. The messages API is unaffected (it is a
-# host-side endpoint, not egress).
+# forwarding). The develop job ships a shell + the Claude Code CLI.
+#
+# The Anthropic messages API rides the injected http://claude proxy, so the
+# real credential stays on the laptop and never enters the guest. But the
+# interactive claude TUI also (a) does a direct connectivity probe to the
+# literal api.anthropic.com (ignoring ANTHROPIC_BASE_URL) and (b) calls
+# platform.claude.com for statsig/telemetry. Under the default
+# EGRESS_VIOLATION_DESTROY those stray DNS queries tear the guest down; under
+# a hermetic policy they ENOTFOUND and the TUI refuses to start. So allow
+# those hosts and use DENY (refuse anything else, keep the guest alive). The
+# guest only ever holds the placeholder ANTHROPIC_API_KEY=proxy, so reaching
+# api.anthropic.com directly leaks nothing; real messages still proxy.
 name: ci
 jobs:
   develop:
     environment:
       packages: [busybox, claude, git]
     network: NETWORK_MODE_EXTERNAL
-    egress: [platform.claude.com]
+    egress: [api.anthropic.com, platform.claude.com]
     egressPolicy: EGRESS_VIOLATION_DENY
     steps:
       - name: build
