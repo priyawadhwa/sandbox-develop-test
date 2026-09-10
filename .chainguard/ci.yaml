@@ -9,7 +9,7 @@ name: ci
 jobs:
   develop:
     environment:
-      packages: [busybox, claude-code, git]
+      packages: [busybox, claude, git]
     steps:
       - name: build
         cmd: [go, build, ./...]
