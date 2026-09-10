@@ -1,14 +1,15 @@
 # Copyright 2026 Chainguard, Inc.
 # SPDX-License-Identifier: Apache-2.0
 
-# Minimal workflow.v1 document for a `chainctl develop` session smoke test.
-# The `develop` job is the session's default: its environment (the Go
-# toolchain + git) is what the resident shell opens in.
+# Smoke-test workflow for `chainctl develop --with claude` (laptop credential
+# forwarding). The `develop` job's environment ships a shell plus the Claude
+# Code CLI; the session opens a shell in it and `claude` reaches
+# http://claude/ (the forwarder on the laptop injects the real credential).
 name: ci
 jobs:
   develop:
     environment:
-      packages: [go, git]
+      packages: [busybox, claude-code, git]
     steps:
       - name: build
         cmd: [go, build, ./...]
