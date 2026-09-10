@@ -2,14 +2,21 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Smoke-test workflow for `chainctl develop --with claude` (laptop credential
-# forwarding). The `develop` job's environment ships a shell plus the Claude
-# Code CLI; the session opens a shell in it and `claude` reaches
-# http://claude/ (the forwarder on the laptop injects the real credential).
+# forwarding). The develop job ships a shell + the Claude Code CLI. The Claude
+# API rides the injected http://claude proxy (credential stays on the laptop),
+# but the interactive TUI also makes direct calls to platform.claude.com etc.
+# Under the default EGRESS_VIOLATION_DESTROY a stray DNS query tears the guest
+# down (the "connection lost" loop), so this job uses DENY: refuse the stray
+# connection, keep the guest alive. The messages API is unaffected (it is a
+# host-side endpoint, not egress).
 name: ci
 jobs:
   develop:
     environment:
       packages: [busybox, claude, git]
+    network: NETWORK_MODE_EXTERNAL
+    egress: [platform.claude.com]
+    egressPolicy: EGRESS_VIOLATION_DENY
     steps:
       - name: build
         cmd: [go, build, ./...]
